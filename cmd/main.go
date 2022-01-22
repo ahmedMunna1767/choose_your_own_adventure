@@ -4,18 +4,21 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
-	cyoa "../story.go"
+	cyoa "github.com/ahmedMunna1767/choose_your_own_adventure"
 )
 
 func main() {
+
 	// Create flags for our optional variables
 	port := flag.Int("port", 3000, "the port to start the CYOA web application on")
-	filename := flag.String("file", "../../gopher.json", "the JSON file with the CYOA story")
+	filename := flag.String("storyFile", "../gopher.json", "the JSON file with the CYOA story")
+	templateFile := flag.String("templateFile", "./template.html", "Template file")
 	flag.Parse()
 	fmt.Printf("Using the story in %s.\n", *filename)
 
@@ -25,6 +28,13 @@ func main() {
 		panic(err)
 	}
 	story, err := cyoa.JsonStory(f)
+	if err != nil {
+		panic(err)
+	}
+
+	storyTmplBytes, err := ioutil.ReadFile(*templateFile)
+	storyTmpl := string(storyTmplBytes)
+
 	if err != nil {
 		panic(err)
 	}
@@ -61,66 +71,3 @@ func pathFn(r *http.Request) string {
 	}
 	return path[len("/story/"):]
 }
-
-// Slightly altered template to show how this feature works
-var storyTmpl = `
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Choose Your Own Adventure</title>
-  </head>
-  <body>
-    <section class="page">
-      <h1>{{.Title}}</h1>
-      {{range .Paragraphs}}
-        <p>{{.}}</p>
-      {{end}}
-      <ul>
-      {{range .Options}}
-        <li><a href="/story/{{.Chapter}}">{{.Text}}</a></li>
-      {{end}}
-      </ul>
-    </section>
-    <style>
-      body {
-        font-family: helvetica, arial;
-      }
-      h1 {
-        text-align:center;
-        position:relative;
-      }
-      .page {
-        width: 80%;
-        max-width: 500px;
-        margin: auto;
-        margin-top: 40px;
-        margin-bottom: 40px;
-        padding: 80px;
-        background: #FCF6FC;
-        border: 1px solid #eee;
-        box-shadow: 0 10px 6px -6px #797;
-      }
-      ul {
-        border-top: 1px dotted #ccc;
-        padding: 10px 0 0 0;
-        -webkit-padding-start: 0;
-      }
-      li {
-        padding-top: 10px;
-      }
-      a,
-      a:visited {
-        text-decoration: underline;
-        color: #555;
-      }
-      a:active,
-      a:hover {
-        color: red;
-      }
-      p {
-        text-indent: 1em;
-      }
-    </style>
-  </body>
-</html>`
